@@ -12,15 +12,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Edit, Trash2, Loader2, Plus, Search } from "lucide-react";
+import { Edit, Trash2, Loader2, Plus } from "lucide-react";
 
 type Group = { id: number; name: string };
 
 export default function ItemGroupsPage() {
   const queryClient = useQueryClient();
   const [newGroup, setNewGroup] = useState("");
-  const [search, setSearch] = useState(""); // <-- search state
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
   const [editValue, setEditValue] = useState("");
   const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
   const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null);
@@ -56,8 +55,12 @@ export default function ItemGroupsPage() {
       queryClient.invalidateQueries({ queryKey: ["item-groups"] });
       setNewGroup("");
     },
-    onError: (err: any) => {
-      alert(err?.message || "Add failed");
+    onError: (err: unknown) => {
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Add failed");
+      } else {
+        alert("Add failed");
+      }
     },
   });
 
@@ -76,14 +79,17 @@ export default function ItemGroupsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["item-groups"] });
-      setEditingId(null);
       setEditValue("");
       setEditDialogOpen(false);
       setPendingEdit(null);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setEditLoadingId(null);
-      alert(err?.message || "Edit failed");
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Edit failed");
+      } else {
+        alert("Edit failed");
+      }
     },
   });
 
@@ -101,9 +107,13 @@ export default function ItemGroupsPage() {
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setDeleteLoadingId(null);
-      alert(err?.message || "Delete failed");
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Delete failed");
+      } else {
+        alert("Delete failed");
+      }
     },
   });
 
@@ -208,18 +218,16 @@ export default function ItemGroupsPage() {
           {/* Sticky Header & Add */}
           <div className="sticky top-0 z-20 bg-white border-b px-20 py-5 flex flex-col gap-4 rounded-t-xl shadow-sm">
             <h2 className="text-2xl font-bold tracking-tight">Item Groups</h2>
-   
-         {/* Search control aligned with table and header */}
-<div className="px-20 mb-4">
-  <Input
-    className="w-full text-base"
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    placeholder="Search groups..."
-    spellCheck={false}
-  />
-</div>
-
+            {/* Search control aligned with table and header */}
+            <div className="px-20 mb-4">
+              <Input
+                className="w-full text-base"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search groups..."
+                spellCheck={false}
+              />
+            </div>
             <form
               onSubmit={e => {
                 e.preventDefault();

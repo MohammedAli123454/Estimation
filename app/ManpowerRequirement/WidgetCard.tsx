@@ -3,13 +3,13 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FC } from "react";
 
-type Props = {
+type WidgetCardProps = {
   title: string;
   selected: boolean;
   onClick: () => void;
 };
 
-export const WidgetCard: FC<Props> = ({ title, selected, onClick }) => (
+export const WidgetCard: FC<WidgetCardProps> = ({ title, selected, onClick }) => (
   <Card
     className={cn(
       "w-full cursor-pointer px-4 py-3 flex items-center justify-center text-center border-2 transition-all duration-200 h-24 shadow-none",

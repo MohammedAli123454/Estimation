@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Select from "react-select";
+import Select from "@/components/ReactSelectClient" // Use your wrapper!
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,20 +15,19 @@ import {
 } from "@/components/ui/dialog";
 import { Edit, Trash2, Loader2, Plus } from "lucide-react";
 
+// TypeScript types
 type Group = { id: number; name: string };
 type GroupItem = {
   id: number;
   itemNo: string | null;
   description: string;
   unit: string;
-  unitRateSar: string; // from DB as string (numeric)
+  unitRateSar: string;
   groupId: number;
 };
 
 export default function GroupItemsPage() {
   const queryClient = useQueryClient();
-
-  // UI State
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [search, setSearch] = useState("");
   const [itemForm, setItemForm] = useState<Omit<GroupItem, "id" | "groupId">>({
@@ -39,11 +38,10 @@ export default function GroupItemsPage() {
   });
   const [editingItem, setEditingItem] = useState<GroupItem | null>(null);
 
-  // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
-  // 1. Load all groups for select
+  // Fetch groups
   const { data: groups = [], isLoading: loadingGroups } = useQuery<Group[]>({
     queryKey: ["item-groups"],
     queryFn: async () => {
@@ -53,7 +51,7 @@ export default function GroupItemsPage() {
     },
   });
 
-  // 2. Load items for selected group
+  // Fetch items
   const { data: items = [], isLoading: loadingItems } = useQuery<GroupItem[]>({
     queryKey: ["group-items", selectedGroup?.id],
     enabled: !!selectedGroup,
@@ -64,7 +62,7 @@ export default function GroupItemsPage() {
     },
   });
 
-  // 3. ADD item
+  // Add item
   const addMutation = useMutation({
     mutationFn: async (item: Omit<GroupItem, "id">) => {
       const res = await fetch("/api/item-groups-items", {
@@ -80,12 +78,16 @@ export default function GroupItemsPage() {
       setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
       setEditingItem(null);
     },
-    onError: (err: any) => {
-      alert(err?.message || "Add failed");
+    onError: (err: unknown) => {
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Add failed");
+      } else {
+        alert("Add failed");
+      }
     },
   });
 
-  // 4. EDIT item
+  // Edit item
   const editMutation = useMutation({
     mutationFn: async (item: GroupItem) => {
       const res = await fetch(`/api/item-groups-items/${item.id}`, {
@@ -99,14 +101,18 @@ export default function GroupItemsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["group-items", selectedGroup?.id] });
       setEditingItem(null);
-      setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" }); // Clear form after update
+      setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
     },
-    onError: (err: any) => {
-      alert(err?.message || "Edit failed");
+    onError: (err: unknown) => {
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Edit failed");
+      } else {
+        alert("Edit failed");
+      }
     },
   });
 
-  // 5. DELETE item
+  // Delete item
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`/api/item-groups-items/${id}`, { method: "DELETE" });
@@ -118,12 +124,15 @@ export default function GroupItemsPage() {
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);
     },
-    onError: (err: any) => {
-      alert(err?.message || "Delete failed");
+    onError: (err: unknown) => {
+      if (typeof err === "object" && err && "message" in err) {
+        alert((err as { message: string }).message || "Delete failed");
+      } else {
+        alert("Delete failed");
+      }
     },
   });
 
-  // Filtered by search term (applied to description or itemNo)
   const filteredItems = items.filter(
     (item) =>
       item.description.toLowerCase().includes(search.toLowerCase()) ||
@@ -142,7 +151,7 @@ export default function GroupItemsPage() {
               isLoading={loadingGroups}
               placeholder="Select a group..."
               value={selectedGroup ? { value: selectedGroup.id, label: selectedGroup.name } : null}
-              onChange={(option) => {
+              onChange={(option: any) => {
                 const group = groups.find((g) => g.id === option?.value);
                 setSelectedGroup(group || null);
                 setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
@@ -151,10 +160,8 @@ export default function GroupItemsPage() {
               classNamePrefix="react-select"
             />
           </div>
-          {/* Only show add/search controls if a group is selected */}
           {selectedGroup && (
             <div className="flex gap-3 items-center">
-              {/* Search input */}
               <Input
                 className="text-base flex-1"
                 value={search}
@@ -162,7 +169,6 @@ export default function GroupItemsPage() {
                 placeholder="Search item no / description..."
                 spellCheck={false}
               />
-              {/* ADD/EDIT form */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -228,7 +234,6 @@ export default function GroupItemsPage() {
                     </>
                   )}
                 </Button>
-                {/* Cancel edit */}
                 {editingItem && (
                   <Button
                     type="button"
@@ -246,8 +251,6 @@ export default function GroupItemsPage() {
             </div>
           )}
         </div>
-
-        {/* Items Table */}
         {selectedGroup && (
           <div className="px-20 py-7 flex-1 overflow-y-auto bg-white scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-blue-200 scrollbar-track-transparent">
             <table className="w-full text-base rounded-xl overflow-hidden shadow-sm bg-white">
@@ -324,8 +327,6 @@ export default function GroupItemsPage() {
             </table>
           </div>
         )}
-
-        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

@@ -1,6 +1,10 @@
 "use client";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
@@ -8,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Item, WidgetEntry } from "./types";
 
-interface Props {
+interface WidgetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   groupName: string;
@@ -32,7 +36,7 @@ export function WidgetDialog({
   groupName,
   items,
   onFinish,
-}: Props) {
+}: WidgetDialogProps) {
   const originalItems = useRef<Item[]>(items);
 
   const { control, watch, handleSubmit, setValue } = useForm<{ data: WidgetEntry[] }>({
@@ -49,7 +53,7 @@ export function WidgetDialog({
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "data" });
-  const data = watch("data");
+  const data = watch("data") ?? [];
 
   const [durationDialogOpen, setDurationDialogOpen] = useState(false);
   const [durationAllDays, setDurationAllDays] = useState<number>(1);
@@ -62,7 +66,7 @@ export function WidgetDialog({
   };
 
   const applyDurationToAll = () => {
-    data.forEach((row, idx) => {
+    data.forEach((_, idx) => {
       setValue(`data.${idx}.days`, durationAllDays, { shouldDirty: true });
       setValue(`data.${idx}.persons`, durationAllPersons, { shouldDirty: true });
     });
@@ -70,7 +74,7 @@ export function WidgetDialog({
   };
 
   useEffect(() => {
-    data?.forEach((row, idx) => {
+    data.forEach((row, idx) => {
       const isDb = isDbItem(row, originalItems.current);
       const shouldAutoCalc =
         isDb || row.totalHours === row.persons * 10 * row.days;
@@ -83,17 +87,17 @@ export function WidgetDialog({
         setValue(`data.${idx}.totalValue`, row.totalHours * rate, { shouldDirty: true });
       }
     });
-    // eslint-disable-next-line
-  }, [JSON.stringify(data?.map(d => [d.days, d.persons, d.totalHours]))]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(data.map(d => [d.days, d.persons, d.totalHours]))]);
 
   const grandTotal = useMemo(
-    () => data?.reduce((sum, row) => sum + (Number(row?.totalValue) || 0), 0) ?? 0,
+    () => data.reduce((sum, row) => sum + (Number(row?.totalValue) || 0), 0),
     [data]
   );
 
   const handleAdd = () => {
     append({
-      id: Date.now() * -1,        // Use a temporary negative id
+      id: Date.now() * -1, // Use a temporary negative id
       itemNo: "",
       description: "",
       unit: "",
@@ -104,7 +108,6 @@ export function WidgetDialog({
       totalValue: 0,
     });
   };
-  
 
   return (
     <>
@@ -131,7 +134,11 @@ export function WidgetDialog({
               <div className="text-lg font-semibold text-blue-700 flex items-center gap-2 whitespace-nowrap">
                 Grand Total:&nbsp;
                 <span className="text-2xl">
-                  {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR
+                  {grandTotal.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  SAR
                 </span>
               </div>
             </DialogHeader>
@@ -152,7 +159,7 @@ export function WidgetDialog({
                 </thead>
                 <tbody>
                   {fields.map((row, idx) => {
-                    const isDb = isDbItem(data?.[idx] ?? {}, originalItems.current);
+                    const isDb = isDbItem(data?.[idx] ?? {} as WidgetEntry, originalItems.current);
                     return (
                       <tr key={row.id}>
                         <td className="px-3 py-2 border-b font-mono">
@@ -161,7 +168,12 @@ export function WidgetDialog({
                               control={control}
                               name={`data.${idx}.itemNo`}
                               render={({ field }) => (
-                                <input type="text" className="w-20 border border-gray-200 p-1 rounded text-center" {...field} value={field.value ?? ""} />
+                                <input
+                                  type="text"
+                                  className="w-20 border border-gray-200 p-1 rounded text-center"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                />
                               )}
                             />
                           )}
@@ -172,7 +184,12 @@ export function WidgetDialog({
                               control={control}
                               name={`data.${idx}.description`}
                               render={({ field }) => (
-                                <input type="text" className="w-44 border border-gray-200 p-1 rounded" {...field} value={field.value ?? ""} />
+                                <input
+                                  type="text"
+                                  className="w-44 border border-gray-200 p-1 rounded"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                />
                               )}
                             />
                           )}
@@ -183,7 +200,12 @@ export function WidgetDialog({
                               control={control}
                               name={`data.${idx}.unit`}
                               render={({ field }) => (
-                                <input type="text" className="w-16 border border-gray-200 p-1 rounded text-center" {...field} value={field.value ?? ""} />
+                                <input
+                                  type="text"
+                                  className="w-16 border border-gray-200 p-1 rounded text-center"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                />
                               )}
                             />
                           )}
@@ -194,7 +216,14 @@ export function WidgetDialog({
                               control={control}
                               name={`data.${idx}.unitRateSar`}
                               render={({ field }) => (
-                                <input type="number" min={0} step={0.01} className="w-24 border border-gray-200 p-1 rounded text-right" {...field} value={field.value ?? "0"} />
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.01}
+                                  className="w-24 border border-gray-200 p-1 rounded text-right"
+                                  {...field}
+                                  value={field.value ?? "0"}
+                                />
                               )}
                             />
                           )}
@@ -204,7 +233,13 @@ export function WidgetDialog({
                             control={control}
                             name={`data.${idx}.days`}
                             render={({ field }) => (
-                              <input type="number" min={1} className="w-16 border border-gray-200 p-1 rounded text-center" {...field} value={field.value ?? 1} />
+                              <input
+                                type="number"
+                                min={1}
+                                className="w-16 border border-gray-200 p-1 rounded text-center"
+                                {...field}
+                                value={field.value ?? 1}
+                              />
                             )}
                           />
                         </td>
@@ -213,7 +248,13 @@ export function WidgetDialog({
                             control={control}
                             name={`data.${idx}.persons`}
                             render={({ field }) => (
-                              <input type="number" min={1} className="w-16 border border-gray-200 p-1 rounded text-center" {...field} value={field.value ?? 1} />
+                              <input
+                                type="number"
+                                min={1}
+                                className="w-16 border border-gray-200 p-1 rounded text-center"
+                                {...field}
+                                value={field.value ?? 1}
+                              />
                             )}
                           />
                         </td>
@@ -222,7 +263,13 @@ export function WidgetDialog({
                             control={control}
                             name={`data.${idx}.totalHours`}
                             render={({ field }) => (
-                              <input type="number" min={0} className="w-20 border border-gray-200 p-1 rounded text-center" {...field} value={field.value ?? 0} />
+                              <input
+                                type="number"
+                                min={0}
+                                className="w-20 border border-gray-200 p-1 rounded text-center"
+                                {...field}
+                                value={field.value ?? 0}
+                              />
                             )}
                           />
                         </td>
@@ -231,8 +278,25 @@ export function WidgetDialog({
                         </td>
                         <td className="px-3 py-2 border-b text-center" style={{ width: 120 }}>
                           <div className="flex gap-1 justify-center">
-                            <Button type="button" size="icon" variant="ghost" className="text-red-500" onClick={() => remove(idx)} disabled={fields.length === 1}><Trash2 size={18} /></Button>
-                            <Button type="button" size="icon" variant="ghost" className="text-green-600" onClick={handleAdd}><Plus size={18} /></Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="text-red-500"
+                              onClick={() => remove(idx)}
+                              disabled={fields.length === 1}
+                            >
+                              <Trash2 size={18} />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="text-green-600"
+                              onClick={handleAdd}
+                            >
+                              <Plus size={18} />
+                            </Button>
                           </div>
                         </td>
                       </tr>

@@ -9,13 +9,14 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableCell, TableBody } from "@/components/ui/table";
 import { BarLoader } from "react-spinners";
 
-function getNosXHrsXDays(entry: any): string {
+// Helper functions with types!
+function getNosXHrsXDays(entry: Partial<WidgetEntry>): string {
   if (entry && typeof entry.persons !== "undefined" && typeof entry.days !== "undefined") {
     return `${entry.persons}x10x${entry.days}`;
   }
   return "";
 }
-function calculateRequiredQty(entry: any): number | "" {
+function calculateRequiredQty(entry: Partial<WidgetEntry>): number | "" {
   if (entry && typeof entry.persons !== "undefined" && typeof entry.days !== "undefined") {
     return Number(entry.persons) * 10 * Number(entry.days);
   }
@@ -74,12 +75,13 @@ export default function Page() {
 
   // Export to Excel
   const exportToExcel = () => {
-    const grouped = consolidatedRows.reduce((acc, row) => {
-      (acc[row.group] = acc[row.group] || []).push(row);
+    // Grouped is a Record<string, WidgetEntry[]>
+    const grouped: Record<string, WidgetEntry[]> = consolidatedRows.reduce((acc, row) => {
+      (acc[row.group] = acc[row.group] || []).push(row as WidgetEntry);
       return acc;
-    }, {} as Record<string, typeof consolidatedRows>);
+    }, {} as Record<string, WidgetEntry[]>);
 
-    const wsData: any[] = [
+    const wsData: (string | number)[][] = [
       [
         "Item No.",
         "Description",
@@ -97,9 +99,9 @@ export default function Page() {
       wsData.push([groupName]);
       headingRows.push(currentRow);
       currentRow++;
-      items.forEach((entry: any) => {
+      items.forEach((entry) => {
         wsData.push([
-          entry.itemNo,
+          entry.itemNo ?? "",
           entry.description,
           getNosXHrsXDays(entry),
           entry.unit,
@@ -126,7 +128,7 @@ export default function Page() {
     );
 
     let rowIdx = 1;
-    Object.entries(grouped).forEach(([groupName, items]) => {
+    Object.entries(grouped).forEach(([_, items]) => {
       (worksheet["!merges"] = worksheet["!merges"] || []).push({
         s: { r: rowIdx, c: 0 },
         e: { r: rowIdx, c: 6 },
@@ -167,7 +169,6 @@ export default function Page() {
               <div className="text-blue-700 text-lg font-medium pt-2 text-center w-full">Loading items…</div>
             </div>
           </div>
-
         ) : (
           <WidgetDialog
             open={dialogOpen}
