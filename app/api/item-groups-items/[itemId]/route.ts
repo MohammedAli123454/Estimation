@@ -3,8 +3,12 @@ import { db } from "@/app/config/db";
 import { groupItems } from "@/app/config/schema";
 import { eq } from "drizzle-orm";
 
-export async function PATCH(req: NextRequest, { params }: { params: { itemId: string } }) {
-  const id = Number(params.itemId);
+// PATCH: Update a group item
+export async function PATCH(req: NextRequest) {
+  // Extract itemId from the path
+  const segments = req.nextUrl.pathname.split("/");
+  const id = parseInt(segments.at(-1)!, 10);
+
   const { itemNo, description, unit, unitRateSar, groupId } = await req.json();
   if (!description?.trim() || !unit?.trim() || !unitRateSar)
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -17,8 +21,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { itemId: st
   return NextResponse.json(item);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { itemId: string } }) {
-  const id = Number(params.itemId);
+// DELETE: Remove a group item
+export async function DELETE(req: NextRequest) {
+  // Extract itemId from the path
+  const segments = req.nextUrl.pathname.split("/");
+  const id = parseInt(segments.at(-1)!, 10);
+
   await db.delete(groupItems).where(eq(groupItems.id, id));
   return NextResponse.json({ success: true });
 }

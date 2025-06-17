@@ -1,31 +1,59 @@
-//app/api/item-groups/[id]/route.ts
-import { db } from "@/app/config/db";
-import { itemGroups } from "@/app/config/schema";
+// app/api/group-items/[itemId]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/app/config/db";
+import { groupItems } from "@/app/config/schema";
 import { eq } from "drizzle-orm";
 
-// PATCH (update group)
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  const { name } = await req.json();
-
-  if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
-
+// PATCH: Update a group item
+export async function PATCH(request: NextRequest) {
   try {
-    const [updated] = await db
-      .update(itemGroups)
-      .set({ name })
-      .where(eq(itemGroups.id, id))
+    // Robust extraction of itemId from the URL
+    const segments = request.nextUrl.pathname.split("/");
+    const itemId = parseInt(segments.at(-1)!, 10);
+
+    if (isNaN(itemId)) {
+      return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
+    }
+
+    const { itemNo, description, unit, unitRateSar, groupId } = await request.json();
+
+    if (!description?.trim() || !unit?.trim() || !unitRateSar) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    const [item] = await db
+      .update(groupItems)
+      .set({ itemNo, description, unit, unitRateSar, groupId })
+      .where(eq(groupItems.id, itemId))
       .returning();
-    return NextResponse.json(updated);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+
+    return NextResponse.json(item);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Server Error" },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE (remove group)
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  await db.delete(itemGroups).where(eq(itemGroups.id, id));
-  return NextResponse.json({ success: true });
+// DELETE: Remove a group item
+export async function DELETE(request: NextRequest) {
+  try {
+    // Robust extraction of itemId from the URL
+    const segments = request.nextUrl.pathname.split("/");
+    const itemId = parseInt(segments.at(-1)!, 10);
+
+    if (isNaN(itemId)) {
+      return NextResponse.json({ error: "Invalid item ID" }, { status: 400 });
+    }
+
+    await db.delete(groupItems).where(eq(groupItems.id, itemId));
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error?.message || "Server Error" },
+      { status: 500 }
+    );
+  }
 }
