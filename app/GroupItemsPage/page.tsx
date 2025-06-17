@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Select from "@/components/ReactSelectClient" // Use your wrapper!
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +27,7 @@ type GroupItem = {
 
 export default function GroupItemsPage() {
   const queryClient = useQueryClient();
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [itemForm, setItemForm] = useState<Omit<GroupItem, "id" | "groupId">>({
     itemNo: "",
@@ -44,18 +43,21 @@ export default function GroupItemsPage() {
   // Fetch groups
   const { data: groups = [], isLoading: loadingGroups } = useQuery<Group[]>({
     queryKey: ["item-groups"],
-    queryFn: async () => {
+    queryFn: async (): Promise<Group[]> => {
       const res = await fetch("/api/item-groups-items/item-groups");
       if (!res.ok) throw new Error("Failed to load groups");
       return res.json();
     },
   });
 
+  // Find the currently selected group object, if any
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId) || null;
+
   // Fetch items
   const { data: items = [], isLoading: loadingItems } = useQuery<GroupItem[]>({
     queryKey: ["group-items", selectedGroup?.id],
     enabled: !!selectedGroup,
-    queryFn: async () => {
+    queryFn: async (): Promise<GroupItem[]> => {
       const res = await fetch(`/api/item-groups-items/group-items?groupId=${selectedGroup?.id}`);
       if (!res.ok) throw new Error("Failed to load items");
       return res.json();
@@ -80,7 +82,7 @@ export default function GroupItemsPage() {
     },
     onError: (err: unknown) => {
       if (typeof err === "object" && err && "message" in err) {
-        alert((err as { message: string }).message || "Add failed");
+        alert((err as { message?: string }).message || "Add failed");
       } else {
         alert("Add failed");
       }
@@ -105,7 +107,7 @@ export default function GroupItemsPage() {
     },
     onError: (err: unknown) => {
       if (typeof err === "object" && err && "message" in err) {
-        alert((err as { message: string }).message || "Edit failed");
+        alert((err as { message?: string }).message || "Edit failed");
       } else {
         alert("Edit failed");
       }
@@ -126,7 +128,7 @@ export default function GroupItemsPage() {
     },
     onError: (err: unknown) => {
       if (typeof err === "object" && err && "message" in err) {
-        alert((err as { message: string }).message || "Delete failed");
+        alert((err as { message?: string }).message || "Delete failed");
       } else {
         alert("Delete failed");
       }
@@ -146,19 +148,30 @@ export default function GroupItemsPage() {
         <div className="sticky top-0 z-20 bg-white border-b px-20 py-5 flex flex-col gap-4 rounded-t-xl shadow-sm">
           <h2 className="text-2xl font-bold tracking-tight">Group Items</h2>
           <div className="w-full mb-2">
-            <Select
-              options={groups.map((g) => ({ value: g.id, label: g.name, group: g }))}
-              isLoading={loadingGroups}
-              placeholder="Select a group..."
-              value={selectedGroup ? { value: selectedGroup.id, label: selectedGroup.name } : null}
-              onChange={(option: any) => {
-                const group = groups.find((g) => g.id === option?.value);
-                setSelectedGroup(group || null);
-                setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
-                setEditingItem(null);
+            <select
+              value={selectedGroupId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "") {
+                  setSelectedGroupId(null);
+                  setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
+                  setEditingItem(null);
+                } else {
+                  setSelectedGroupId(Number(value));
+                  setItemForm({ itemNo: "", description: "", unit: "", unitRateSar: "" });
+                  setEditingItem(null);
+                }
               }}
-              classNamePrefix="react-select"
-            />
+              className="w-full border rounded px-3 py-2 bg-white text-base"
+              disabled={loadingGroups}
+            >
+              <option value="">Select a group...</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
           </div>
           {selectedGroup && (
             <div className="flex gap-3 items-center">

@@ -339,6 +339,7 @@ export function WidgetDialog({
                 className="w-full border p-2 rounded"
               />
             </div>
+            
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDurationDialogOpen(false)}>Cancel</Button>
