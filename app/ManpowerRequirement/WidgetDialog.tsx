@@ -46,8 +46,8 @@ export function WidgetDialog({
         unitRateSar: String(item.unitRateSar),
         days: 1,
         persons: 1,
-        totalHours: 10,
-        totalValue: Number(item.unitRateSar) * 10,
+        totalHours: item.unit === "MH" ? 10 : 1, // <-- MH gets 10, others get 1
+        totalValue: Number(item.unitRateSar) * (item.unit === "MH" ? 10 : 1),
       })),
     },
   });
@@ -59,38 +59,45 @@ export function WidgetDialog({
   const [durationAllDays, setDurationAllDays] = useState<number>(1);
   const [durationAllPersons, setDurationAllPersons] = useState<number>(1);
 
-  const handleOpenDurationDialog = () => {
-    setDurationAllDays(data?.[0]?.days ?? 1);
-    setDurationAllPersons(data?.[0]?.persons ?? 1);
-    setDurationDialogOpen(true);
-  };
+  // When Days/Persons/totalHours/unitRateSar change, keep totalHours and totalValue in sync for MH
+  useEffect(() => {
+    data.forEach((row, idx) => {
+      const rate = Number(row.unitRateSar) || 0;
 
+      if (row.unit === "MH") {
+        // For "MH" unit, totalHours is always days * persons * 10 (or whatever multiplier you use)
+        const days = Number(row.days) || 1;
+        const persons = Number(row.persons) || 1;
+        const multiplier = 10; // CHANGE THIS if your logic is different!
+        const totalHours = days * persons * multiplier;
+        setValue(`data.${idx}.totalHours`, totalHours, { shouldDirty: true });
+        setValue(`data.${idx}.totalValue`, totalHours * rate, { shouldDirty: true });
+      } else {
+        // For non-MH, user can edit totalHours directly, but always recalc totalValue
+        const totalHours = Number(row.totalHours) || 0;
+        setValue(`data.${idx}.totalValue`, totalHours * rate, { shouldDirty: true });
+      }
+    });
+    // Dependency array: react when days, persons, totalHours, unit, or unitRateSar change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    JSON.stringify(
+      data.map(d => [d.days, d.persons, d.totalHours, d.unit, d.unitRateSar])
+    ),
+  ]);
+
+  // Apply Set Duration for All (only MH items)
   const applyDurationToAll = () => {
-    data.forEach((_, idx) => {
-      setValue(`data.${idx}.days`, durationAllDays, { shouldDirty: true });
-      setValue(`data.${idx}.persons`, durationAllPersons, { shouldDirty: true });
+    data.forEach((row, idx) => {
+      if (row.unit === "MH") {
+        setValue(`data.${idx}.days`, durationAllDays, { shouldDirty: true });
+        setValue(`data.${idx}.persons`, durationAllPersons, { shouldDirty: true });
+      }
     });
     setDurationDialogOpen(false);
   };
 
-  useEffect(() => {
-    data.forEach((row, idx) => {
-      const isDb = isDbItem(row, originalItems.current);
-      const shouldAutoCalc =
-        isDb || row.totalHours === row.persons * 10 * row.days;
-      const rate = Number(row.unitRateSar) || 0;
-      if (shouldAutoCalc) {
-        const totalHours = row.persons * 10 * row.days;
-        setValue(`data.${idx}.totalHours`, totalHours, { shouldDirty: true });
-        setValue(`data.${idx}.totalValue`, totalHours * rate, { shouldDirty: true });
-      } else {
-        setValue(`data.${idx}.totalValue`, row.totalHours * rate, { shouldDirty: true });
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(data.map(d => [d.days, d.persons, d.totalHours]))]);
-
-  // FIX: useMemo dependency is now stable and primitive
+  // Grand Total
   const grandTotal = useMemo(
     () => data.reduce((sum, row) => sum + (Number(row?.totalValue) || 0), 0),
     [data.map(d => d.totalValue).join(",")]
@@ -98,7 +105,7 @@ export function WidgetDialog({
 
   const handleAdd = () => {
     append({
-      id: Date.now() * -1, // Use a temporary negative id
+      id: Date.now() * -1,
       itemNo: "",
       description: "",
       unit: "",
@@ -108,6 +115,12 @@ export function WidgetDialog({
       totalHours: 10,
       totalValue: 0,
     });
+  };
+
+  const handleOpenDurationDialog = () => {
+    setDurationAllDays(1);
+    setDurationAllPersons(1);
+    setDurationDialogOpen(true);
   };
 
   return (
@@ -129,7 +142,7 @@ export function WidgetDialog({
                   onClick={handleOpenDurationDialog}
                   className="ml-2"
                 >
-                  Set Duration
+                  Set Duration for All MH Items
                 </Button>
               </div>
               <div className="text-lg font-semibold text-blue-700 flex items-center gap-2 whitespace-nowrap">
@@ -153,7 +166,7 @@ export function WidgetDialog({
                     <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100">Unit Rate (SAR)</th>
                     <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100">Days</th>
                     <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100">Persons</th>
-                    <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100 text-center">Total Hours</th>
+                    <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100 text-center">Total Hours/LS</th>
                     <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100 text-center">Total Value (SAR)</th>
                     <th className="py-2 px-3 border-b text-xs font-bold text-gray-700 bg-blue-100 text-center" style={{ width: 120 }}>Action</th>
                   </tr>
@@ -270,6 +283,7 @@ export function WidgetDialog({
                                 className="w-20 border border-gray-200 p-1 rounded text-center"
                                 {...field}
                                 value={field.value ?? 0}
+                                disabled={data?.[idx]?.unit === "MH"}
                               />
                             )}
                           />
@@ -317,11 +331,11 @@ export function WidgetDialog({
       <Dialog open={durationDialogOpen} onOpenChange={setDurationDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Set Duration for All Items</DialogTitle>
+            <DialogTitle>Set Duration for All MH Items</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-2">
             <div>
-              <label className="block font-medium mb-1">Set All Days:</label>
+              <label className="block font-medium mb-1">Set All Days (MH only):</label>
               <input
                 type="number"
                 min={1}
@@ -331,7 +345,7 @@ export function WidgetDialog({
               />
             </div>
             <div>
-              <label className="block font-medium mb-1">Set All Persons:</label>
+              <label className="block font-medium mb-1">Set All Persons (MH only):</label>
               <input
                 type="number"
                 min={1}
@@ -340,7 +354,6 @@ export function WidgetDialog({
                 className="w-full border p-2 rounded"
               />
             </div>
-            
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDurationDialogOpen(false)}>Cancel</Button>

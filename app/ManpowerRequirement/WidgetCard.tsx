@@ -1,5 +1,4 @@
 "use client";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FC } from "react";
 
@@ -10,21 +9,28 @@ type WidgetCardProps = {
 };
 
 export const WidgetCard: FC<WidgetCardProps> = ({ title, selected, onClick }) => (
-  <Card
+  <div
     className={cn(
-      "w-full cursor-pointer px-4 py-3 flex items-center justify-center text-center border-2 transition-all duration-200 h-24 shadow-none",
+      "w-full h-20 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer select-none",
+      "shadow-sm",
       selected
-        ? "border-blue-600 bg-blue-50 ring-2 ring-blue-300 scale-105 shadow-lg"
-        : "hover:shadow-lg hover:border-blue-400"
+        ? "ring-2 ring-blue-400 scale-105"
+        : "hover:ring-2 hover:ring-blue-200 hover:scale-[1.025]",
     )}
     onClick={onClick}
     tabIndex={0}
     role="button"
+    style={{
+      background: selected
+        ? "linear-gradient(120deg, #dbeafe 0%, #f0f8ff 100%)"
+        : "linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%)",
+    }}
   >
-    <CardHeader className="w-full p-0">
-      <CardTitle className={cn("text-base font-bold", selected && "text-blue-700")}>
-        {title}
-      </CardTitle>
-    </CardHeader>
-  </Card>
+    <span className={cn(
+      "text-base font-semibold tracking-wide p-2",
+      selected ? "text-blue-700" : "text-slate-700"
+    )}>
+      {title}
+    </span>
+  </div>
 );

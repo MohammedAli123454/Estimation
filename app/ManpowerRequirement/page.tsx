@@ -143,9 +143,15 @@ export default function Page() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      <h2 className="gradient-title text-2xl">Select Activity for Manhours Loading</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-10">
+    <div className="max-w-7xl mx-auto p-4">
+      {/* <h2 className="gradient-title text-2xl">Select Activity for Manhours Loading</h2> */}
+      <h2
+  className="font-extrabold tracking-tighter pr-2 pb-2 bg-gradient-to-br from-blue-500 to-green-500 text-transparent bg-clip-text text-[1.5rem]"
+>
+  Select Activity for Manhours Loading
+</h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-10">
         {groupsLoading ? (
           <div>Loading...</div>
         ) : (
@@ -183,7 +189,7 @@ export default function Page() {
           />
         )
       )}
-      <h2 className="text-xl font-semibold mt-10 mb-4">Consolidated Entries</h2>
+      {/* <h2 className="text-xl font-semibold mt-10 mb-4">Consolidated Entries</h2> */}
       <div className="flex justify-end mb-4">
         <button
           onClick={exportToExcel}

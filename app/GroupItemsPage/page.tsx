@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Edit, Trash2, Loader2, Plus } from "lucide-react";
 
+// Allowed unit options
+const UNIT_OPTIONS = ["MH", "EA", "LS", "LM", "CUM", "SQM"] as const;
+
 // TypeScript types
 type Group = { id: number; name: string };
 type GroupItem = {
@@ -206,13 +209,18 @@ export default function GroupItemsPage() {
                   placeholder="Description"
                   required
                 />
-                <Input
-                  className="w-24"
+                {/* Dropdown for unit selection */}
+                <select
+                  className="w-28 border rounded px-2 py-2 bg-white text-base"
                   value={itemForm.unit}
-                  onChange={(e) => setItemForm((f) => ({ ...f, unit: e.target.value }))}
-                  placeholder="Unit"
+                  onChange={e => setItemForm(f => ({ ...f, unit: e.target.value }))}
                   required
-                />
+                >
+                  <option value="">Unit</option>
+                  {UNIT_OPTIONS.map(unit => (
+                    <option key={unit} value={unit}>{unit}</option>
+                  ))}
+                </select>
                 <Input
                   className="w-32"
                   value={itemForm.unitRateSar}
