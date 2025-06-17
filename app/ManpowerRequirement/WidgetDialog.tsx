@@ -90,9 +90,10 @@ export function WidgetDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(data.map(d => [d.days, d.persons, d.totalHours]))]);
 
+  // FIX: useMemo dependency is now stable and primitive
   const grandTotal = useMemo(
     () => data.reduce((sum, row) => sum + (Number(row?.totalValue) || 0), 0),
-    [data]
+    [data.map(d => d.totalValue).join(",")]
   );
 
   const handleAdd = () => {

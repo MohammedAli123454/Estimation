@@ -128,7 +128,8 @@ export default function Page() {
     );
 
     let rowIdx = 1;
-    Object.entries(grouped).forEach(([_, items]) => {
+    // Fix: don't use _ if not used
+    Object.entries(grouped).forEach(([groupName, items]) => {
       (worksheet["!merges"] = worksheet["!merges"] || []).push({
         s: { r: rowIdx, c: 0 },
         e: { r: rowIdx, c: 6 },
