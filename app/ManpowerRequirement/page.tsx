@@ -128,8 +128,8 @@ export default function Page() {
     );
 
     let rowIdx = 1;
-    // Fix: don't use _ if not used
-    Object.entries(grouped).forEach(([groupName, items]) => {
+    // Now: ignore first destructured value, use only items
+    Object.entries(grouped).forEach(([, items]) => {
       (worksheet["!merges"] = worksheet["!merges"] || []).push({
         s: { r: rowIdx, c: 0 },
         e: { r: rowIdx, c: 6 },

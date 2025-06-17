@@ -17,7 +17,13 @@ export async function POST(req: NextRequest) {
   try {
     const [created] = await db.insert(itemGroups).values({ name }).returning();
     return NextResponse.json(created);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e) {
+    const message =
+      e instanceof Error
+        ? e.message
+        : typeof e === "string"
+        ? e
+        : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

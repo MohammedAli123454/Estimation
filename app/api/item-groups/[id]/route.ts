@@ -1,5 +1,3 @@
-// app/api/group-items/[itemId]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/config/db";
 import { groupItems } from "@/app/config/schema";
@@ -29,11 +27,14 @@ export async function PATCH(request: NextRequest) {
       .returning();
 
     return NextResponse.json(item);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Server Error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -50,10 +51,13 @@ export async function DELETE(request: NextRequest) {
 
     await db.delete(groupItems).where(eq(groupItems.id, itemId));
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Server Error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
