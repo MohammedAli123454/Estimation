@@ -15,3 +15,11 @@ export const groupItems = pgTable("group_items", {
     .notNull()
     .references(() => itemGroups.id, { onDelete: "cascade" }),
 });
+
+export const manpowerItems = pgTable("manpower_items", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  rate: numeric("rate", { precision: 8, scale: 2 }).notNull(), // e.g. 147.86
+});

@@ -6,6 +6,7 @@ import { BarLoader } from "react-spinners";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             )}
             <div className="pt-2">{children}</div>
+        
           </main>
         </QueryProvider>
       </body>
