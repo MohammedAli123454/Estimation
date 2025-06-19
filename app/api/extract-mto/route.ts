@@ -25,13 +25,16 @@ export const POST = async (req: NextRequest) => {
 
     // Compose OpenAI prompt
     const prompt = `
-Extract all rows from the following PDF table text as a JSON array.
-Each object must have: "Sl No", "Item Description", "Qty", "UOM", "Remarks".
-Ignore all text outside the table. Do NOT include any explanation—just return the JSON array.
-
-Table Text:
-${tableText}
+    Extract all rows from the following PDF table text as a JSON array.
+    Each object must have: "Sl No", "Item Description", "Qty", "UOM", "Remarks".
+    If there are multiple lines between 'Sl No' and the next row's 'Sl No', combine all those lines as 'Item Description'.
+    The description may span multiple lines—join them with spaces.
+    Ignore all text outside the table. Do NOT include any explanation—just return the JSON array.
+    
+    Table Text:
+    ${tableText}
     `.trim();
+    
 
     // OpenAI call
     const response = await openai.chat.completions.create({
