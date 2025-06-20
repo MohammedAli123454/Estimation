@@ -8,12 +8,18 @@ export const parsePdf = async (buffer: Buffer): Promise<string> => {
 
 // Polyfill for server if needed
 if (typeof window === "undefined") {
-  globalThis.DOMParser = require("xmldom").DOMParser;
-  globalThis.navigator = { userAgent: "node" } as any;
-  if (typeof btoa === "undefined") {
-    globalThis.btoa = (str) => Buffer.from(str).toString("base64");
-  }
-  if (typeof atob === "undefined") {
-    globalThis.atob = (b64) => Buffer.from(b64, "base64").toString("binary");
-  }
+  (async () => {
+    const { DOMParser } = await import("xmldom");
+    globalThis.DOMParser = DOMParser;
+
+    // @ts-expect-error: minimal partial polyfill for server libs
+    globalThis.navigator = { userAgent: "node" };
+
+    if (typeof globalThis.btoa === "undefined") {
+      globalThis.btoa = (str: string) => Buffer.from(str).toString("base64");
+    }
+    if (typeof globalThis.atob === "undefined") {
+      globalThis.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary");
+    }
+  })();
 }
