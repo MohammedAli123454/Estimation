@@ -20,6 +20,8 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "lucide-react": "^0.515.0",
     "neon-serverless": "^0.5.3",
     "next": "15.3.3",
