@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
+import pdf from "pdf-parse";
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// --- Add TextItem type ---
-type TextItem = {
-  str: string;
-  [key: string]: unknown;
-};
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -27,18 +21,10 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    // Parse PDF with pdfjs-dist (Vercel-friendly)
+    // Parse PDF with pdf-parse
     const buffer = Buffer.from(await file.arrayBuffer());
-    const loadingTask = pdfjsLib.getDocument({ data: buffer });
-    const pdf = await loadingTask.promise;
-
-    let tableText = "";
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const content = await page.getTextContent();
-      const items = content.items as TextItem[];
-      tableText += items.map((item) => item.str).join(" ") + "\n";
-    }
+    const data = await pdf(buffer);
+    const tableText = data.text;
 
     // --- Extract MOC# ---
     const mocMatch = tableText.match(/MOC#\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i);
@@ -100,4 +86,12 @@ ${tableText}
     );
   }
 };
+
+export const GET = async () => {
+  return NextResponse.json({
+    message: "API is working",
+    openai: !!process.env.OPENAI_API_KEY,
+  });
+};
+
 
