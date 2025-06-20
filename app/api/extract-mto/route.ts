@@ -27,16 +27,12 @@ export const POST = async (req: NextRequest) => {
     const tableText = data.text;
 
     // --- Extract MOC# ---
-    // Matches: MOC# 12345, MOC #: 12345, MOC#-12345, etc.
     const mocMatch = tableText.match(/MOC#\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i);
     const moc = mocMatch ? mocMatch[1].trim() : "";
 
-    // Improved OpenAI prompt
     const prompt = `
 Extract all rows from the following PDF table text as a JSON array.
-
 Each object must have the keys: "Sl No", "Item Description", "Qty", "UOM", and "Remarks".
-
 - "Qty" must be only the numeric value (integer or decimal) for the quantity. Do not include any unit or letters. 
 - "UOM" must be only the unit of measurement, which can be a single word or multiple words (e.g., "M", "Rolls Each", "Meter Box", "Nos", "Square Meter", "Linear Meter", etc.).
 - If the quantity and UOM appear together (e.g., "3000M", "400 M", "2 Rolls Each", "5.5 Meter Box"), extract the numeric portion as "Qty" and the full text portion after the number as "UOM".
@@ -46,11 +42,9 @@ Each object must have the keys: "Sl No", "Item Description", "Qty", "UOM", and "
 - If multiple lines exist between 'Sl No' rows, treat all those lines as part of "Item Description", except for clearly marked fields such as "Qty", "UOM", or "Remarks".
 - Do NOT combine Qty and UOM in a single field. Do NOT include units in the Qty field. Do NOT add any extra explanation.
 - Ignore all text outside the table and do NOT include any explanation—just return the JSON array.
-
 Table Text:
 ${tableText}
 `.trim();
-
 
     // OpenAI call
     const response = await openai.chat.completions.create({
@@ -67,7 +61,7 @@ ${tableText}
     let table = [];
     try {
       table = JSON.parse(jsonString);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
         {
           error: "Failed to parse table from model response.",
@@ -77,14 +71,16 @@ ${tableText}
       );
     }
 
-    // --- Send back table and moc ---
     return NextResponse.json({ table, moc });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Table extraction error:", e);
     return NextResponse.json(
       {
         error: "Table extraction failed.",
-        details: e.message || e.toString(),
+        details:
+          e && typeof e === "object" && "message" in e
+            ? (e as { message: string }).message
+            : String(e),
       },
       { status: 500 }
     );

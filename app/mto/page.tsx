@@ -49,11 +49,16 @@ export default function ExtractTablePage() {
 
       setTable(data.table);
       setMoc(data.moc || "");
-    } catch (err: any) {
-      setError(err.message || "An error occurred during extraction");
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "message" in err) {
+        setError((err as { message?: string }).message || "An error occurred during extraction");
+      } else {
+        setError("An error occurred during extraction");
+      }
     } finally {
       setIsLoading(false);
     }
+
   };
 
   // --- ExcelJS Export ---
