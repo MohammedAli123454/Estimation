@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { BarLoader } from "react-spinners";
 
 type TableRow = {
   ["Sl No"]?: string;
@@ -11,6 +12,7 @@ type TableRow = {
 
 export default function ExtractTablePage() {
   const [table, setTable] = useState<TableRow[]>([]);
+  const [moc, setMoc] = useState("");
   const [rawText, setRawText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,6 +24,7 @@ export default function ExtractTablePage() {
     setIsLoading(true);
     setError("");
     setTable([]);
+    setMoc("");
     setRawText("");
 
     try {
@@ -41,6 +44,7 @@ export default function ExtractTablePage() {
       }
 
       setTable(data.table);
+      setMoc(data.moc || "");
     } catch (err: any) {
       setError(err.message || "An error occurred during extraction");
     } finally {
@@ -63,14 +67,22 @@ export default function ExtractTablePage() {
           />
         </label>
       </div>
+      {/* Show loader when loading */}
       {isLoading && (
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded">
-          Processing PDF and extracting table...
+        <div className="flex flex-col items-center mb-4 p-4">
+          <BarLoader color="#2563eb" height={5} width={200} />
+          <span className="mt-2 text-blue-700">Processing PDF and extracting table...</span>
         </div>
       )}
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
           <strong>Error:</strong> {error}
+        </div>
+      )}
+      {/* Show MOC# if found */}
+      {moc && (
+        <div className="mb-4 p-2 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 rounded">
+          <span className="font-semibold">MOC#:</span> {moc}
         </div>
       )}
       {table.length > 0 && (
