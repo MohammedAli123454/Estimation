@@ -6,6 +6,12 @@ export const runtime = "nodejs";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// --- Add TextItem type ---
+type TextItem = {
+  str: string;
+  [key: string]: unknown;
+};
+
 export const POST = async (req: NextRequest) => {
   try {
     const formData = await req.formData();
@@ -30,7 +36,8 @@ export const POST = async (req: NextRequest) => {
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const content = await page.getTextContent();
-      tableText += content.items.map((item: any) => item.str).join(" ") + "\n";
+      const items = content.items as TextItem[];
+      tableText += items.map((item) => item.str).join(" ") + "\n";
     }
 
     // --- Extract MOC# ---
